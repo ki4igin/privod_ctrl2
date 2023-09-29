@@ -38,6 +38,27 @@ extern "C" {
 
 void MX_GPIO_Init(void);
 
+#define gpio_on_off_toggle_declare(_name, _port, _pin) \
+    inline static void gpio_##_name##_on(void)         \
+    {                                                  \
+        LL_GPIO_SetOutputPin(_port, _pin);             \
+    }                                                  \
+    inline static void gpio_##_name##_off(void)        \
+    {                                                  \
+        LL_GPIO_ResetOutputPin(_port, _pin);             \
+    }                                                  \
+    inline static void gpio_##_name##_toggle(void)     \
+    {                                                  \
+        LL_GPIO_TogglePin(_port, _pin);             \
+    }
+
+// clang-format on
+gpio_on_off_toggle_declare(led, LED_GPIO_Port, LED_Pin)
+gpio_on_off_toggle_declare(s1, S1_GPIO_Port, S1_Pin)
+gpio_on_off_toggle_declare(s2, S2_GPIO_Port, S2_Pin)
+gpio_on_off_toggle_declare(s3, S3_GPIO_Port, S3_Pin)
+gpio_on_off_toggle_declare(s4, S4_GPIO_Port, S4_Pin)
+
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
