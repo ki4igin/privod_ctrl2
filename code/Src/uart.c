@@ -4,8 +4,9 @@
 #include "stm32f4xx_ll_bus.h"
 #include "stm32f4xx_ll_dma.h"
 #include "buf.h"
+#include "main.h"
 
-#define UART_BAUD_RATE 900000
+#define UART_BAUD_RATE 115200
 
 buf_declare(uart_buf_rx, UART_NBUF_RX);
 
@@ -32,14 +33,14 @@ void UART_Init(void)
     };
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* USART1 DMA TX Init */
-    LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-    LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PRIORITY_LOW);
-    LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MODE_NORMAL);
-    LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PERIPH_NOINCREMENT);
-    LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MEMORY_INCREMENT);
-    LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PDATAALIGN_BYTE);
-    LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MDATAALIGN_BYTE);
+    // /* USART1 DMA TX Init */
+    // LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+    // LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PRIORITY_LOW);
+    // LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MODE_NORMAL);
+    // LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PERIPH_NOINCREMENT);
+    // LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MEMORY_INCREMENT);
+    // LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PDATAALIGN_BYTE);
+    // LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MDATAALIGN_BYTE);
 
     /* USART1 interrupt Init */
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
@@ -58,9 +59,6 @@ void UART_Init(void)
 
     LL_USART_DisableIT_CTS(USART1);
     LL_USART_ConfigAsyncMode(USART1);
-    LL_USART_SetRxTimeout(USART1, 200);
-    LL_USART_EnableRxTimeout(USART1);
-    LL_USART_EnableIT_RTO(USART1);
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableDMAReq_TX(USART1);
     LL_USART_Enable(USART1);
@@ -68,31 +66,57 @@ void UART_Init(void)
 
 void UART_Send_Array(void *buf, uint32_t size)
 {
-    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
-    LL_DMA_ConfigAddresses(
-        DMA1,
-        LL_DMA_CHANNEL_4,
-        (uint32_t)buf,
-        (uint32_t)&USART1->DR,
-        LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, size);
-    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
+    uint8_t *p = buf;
+    LL_GPIO_SetOutputPin(USART1_DE_GPIO_Port, USART1_DE_Pin);    
+    for (uint32_t i = 0; i < size; i++) {
+        while (LL_USART_IsActiveFlag_TXE(USART1) == 0) {
+            ;
+        }
+        LL_USART_TransmitData8(USART1, p[i]);
+    }
+    LL_USART_ClearFlag_TC(USART1);
+    LL_USART_EnableIT_TC(USART1);
+
+    // LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+    // LL_DMA_ConfigAddresses(
+    //     DMA1,
+    //     LL_DMA_CHANNEL_4,
+    //     (uint32_t)buf,
+    //     (uint32_t)&USART1->DR,
+    //     LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+    // LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, size);
+    // LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
 }
 
 void USART1_IRQHandler(void)
 {
     if (LL_USART_IsActiveFlag_RXNE(USART1)) {
+        if (uart_buf_rx.count == 0) {
+            TIM11->CNT = 0;
+            TIM11->CR1 |= TIM_CR1_CEN;
+        }
+
         uart_buf_rx.data[uart_buf_rx.count++] = LL_USART_ReceiveData8(USART1);
 
         if (uart_buf_rx.count == UART_NBUF_RX) {
+            TIM11->CR1 &= ~TIM_CR1_CEN;
             uart_buf_rx.count = 0;
             uart_rx.is_new_data = 1;
             *(uint32_t *)uart_rx.data = *(uint32_t *)uart_buf_rx.data;
         }
     }
+    if (LL_USART_IsActiveFlag_TC(USART1)) {
+        LL_USART_ClearFlag_TC(USART1);
+        LL_USART_DisableIT_TC(USART1);
+        LL_GPIO_ResetOutputPin(USART1_DE_GPIO_Port, USART1_DE_Pin);
+    }
+}
 
-    if (LL_USART_IsActiveFlag_RTO(USART1)) {
-        LL_USART_ClearFlag_RTO(USART1);
+void TIM1_TRG_COM_TIM11_IRQHandler(void)
+{
+    if (TIM11->SR & TIM_SR_UIF) {
+        TIM11->SR &= ~TIM_SR_UIF;
+        TIM11->CR1 &= ~TIM_CR1_CEN;
         uart_buf_rx.count = 0;
     }
 }

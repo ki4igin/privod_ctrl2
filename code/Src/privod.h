@@ -2,6 +2,7 @@
 #define __PRIVOD_H__
 
 #include "stm32f4xx.h"
+#include "stm32f4xx_ll_gpio.h"
 
 struct gpio {
     GPIO_TypeDef *port;
@@ -35,7 +36,7 @@ inline static void privod_mov_process(struct privod *s)
 {
     if (s->offset_ms > 0) {
         LL_GPIO_ResetOutputPin(s->gpio_neg.port, s->gpio_neg.pin);
-        LL_GPIO_SetOutputPin(s->gpio_pos.port, s->gpio_pos.pin);
+				LL_GPIO_SetOutputPin(s->gpio_pos.port, s->gpio_pos.pin);
         s->offset_ms--;
         s->pos_ms++;
     } else if (s->offset_ms < 0) {

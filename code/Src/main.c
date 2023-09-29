@@ -21,6 +21,7 @@
 #include "tim.h"
 #include "uart.h"
 #include "gpio.h"
+#include "motor.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -71,6 +72,7 @@ struct cmd {
     uint16_t id;
     int16_t arg;
 } cmd;
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -112,11 +114,11 @@ static void cmd_work(struct cmd cmd)
     } break;
     case CMD_AZ_GET_POS: {
         cmd.arg = motor_az_get_pos();
-        uart_send_word(cmd);
+        UART_Send_Array(&cmd, sizeof(cmd));
     } break;
     case CMD_EL_GET_POS: {
         cmd.arg = motor_el_get_pos();
-        uart_send_word(cmd);
+        UART_Send_Array(&cmd, sizeof(cmd));
     } break;
     case CMD_SET_ORIGIN: {
         motor_origin();
@@ -163,9 +165,10 @@ int main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_TIM10_Init();
+    MX_TIM11_Init();
     UART_Init();
     /* USER CODE BEGIN 2 */
-
+    LL_TIM_EnableCounter(TIM10);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -180,7 +183,7 @@ int main(void)
         if (uart_rx.is_new_data) {
             uart_rx.is_new_data = 0;
             struct cmd cmd = *(struct cmd *)&uart_rx.data;
-            Cmd_Work(cmd);
+            cmd_work(cmd);
         }
         /* USER CODE END WHILE */
 

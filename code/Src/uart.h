@@ -6,7 +6,7 @@
 #define UART_NBUF_RX 4
 
 extern struct uart_rx {
-    uint32_t is_new_data;
+    volatile uint32_t is_new_data;
     uint8_t data[UART_NBUF_RX];
 } uart_rx;
 
