@@ -10,8 +10,8 @@ struct gpio {
 };
 
 struct privod {
-    struct gpio gpio_pos;
-    struct gpio gpio_neg;
+    struct gpio gpio_p;
+    struct gpio gpio_n;
     int32_t pos_ms;
     int32_t offset_ms;
     uint32_t k_deg2pulse;
@@ -35,18 +35,18 @@ inline static void privod_set_origin(struct privod *s)
 inline static void privod_mov_process(struct privod *s)
 {
     if (s->offset_ms > 0) {
-        LL_GPIO_ResetOutputPin(s->gpio_neg.port, s->gpio_neg.pin);
-				LL_GPIO_SetOutputPin(s->gpio_pos.port, s->gpio_pos.pin);
+        LL_GPIO_ResetOutputPin(s->gpio_n.port, s->gpio_n.pin);
+        LL_GPIO_SetOutputPin(s->gpio_p.port, s->gpio_p.pin);
         s->offset_ms--;
         s->pos_ms++;
     } else if (s->offset_ms < 0) {
-        LL_GPIO_ResetOutputPin(s->gpio_pos.port, s->gpio_pos.pin);
-        LL_GPIO_SetOutputPin(s->gpio_neg.port, s->gpio_neg.pin);
+        LL_GPIO_ResetOutputPin(s->gpio_p.port, s->gpio_p.pin);
+        LL_GPIO_SetOutputPin(s->gpio_n.port, s->gpio_n.pin);
         s->offset_ms++;
         s->pos_ms--;
     } else {
-        LL_GPIO_ResetOutputPin(s->gpio_neg.port, s->gpio_neg.pin);
-        LL_GPIO_ResetOutputPin(s->gpio_pos.port, s->gpio_pos.pin);
+        LL_GPIO_ResetOutputPin(s->gpio_n.port, s->gpio_n.pin);
+        LL_GPIO_ResetOutputPin(s->gpio_p.port, s->gpio_p.pin);
     }
 }
 

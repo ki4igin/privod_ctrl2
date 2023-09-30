@@ -1,22 +1,22 @@
-/* USER CODE BEGIN Header */
+
 /**
-  ******************************************************************************
-  * @file    gpio.h
-  * @brief   This file contains all the function prototypes for
-  *          the gpio.c file
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
+ ******************************************************************************
+ * @file    gpio.h
+ * @brief   This file contains all the function prototypes for
+ *          the gpio.c file
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2023 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __GPIO_H__
 #define __GPIO_H__
@@ -28,14 +28,6 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
 void MX_GPIO_Init(void);
 
 #define gpio_on_off_toggle_declare(_name, _port, _pin) \
@@ -45,26 +37,22 @@ void MX_GPIO_Init(void);
     }                                                  \
     inline static void gpio_##_name##_off(void)        \
     {                                                  \
-        LL_GPIO_ResetOutputPin(_port, _pin);             \
+        LL_GPIO_ResetOutputPin(_port, _pin);           \
     }                                                  \
     inline static void gpio_##_name##_toggle(void)     \
     {                                                  \
-        LL_GPIO_TogglePin(_port, _pin);             \
+        LL_GPIO_TogglePin(_port, _pin);                \
     }
 
-// clang-format on
+// clang-format off
 gpio_on_off_toggle_declare(led, LED_GPIO_Port, LED_Pin)
 gpio_on_off_toggle_declare(s1, S1_GPIO_Port, S1_Pin)
 gpio_on_off_toggle_declare(s2, S2_GPIO_Port, S2_Pin)
 gpio_on_off_toggle_declare(s3, S3_GPIO_Port, S3_Pin)
 gpio_on_off_toggle_declare(s4, S4_GPIO_Port, S4_Pin)
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
+// clang-format on
 
 #ifdef __cplusplus
 }
 #endif
 #endif /*__ GPIO_H__ */
-
